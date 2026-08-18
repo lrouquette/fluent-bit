@@ -16,7 +16,7 @@ A stands for Adobe's changes
 
 # Log
 
-## _unreleased_
+## 1.9.2-0.9.0-adobe
 - envoy: flip fqdn extraction: authority first; fallback to requested_server_name
 
 ## 1.9.2-0.8.0-adobe
