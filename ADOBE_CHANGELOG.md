@@ -16,6 +16,9 @@ A stands for Adobe's changes
 
 # Log
 
+## _unreleased_
+- envoy: flip fqdn extraction: authority first; fallback to requested_server_name
+
 ## 1.9.2-0.8.0-adobe
 - clear cache after k8s API call is successful
 - reload expired auth token
