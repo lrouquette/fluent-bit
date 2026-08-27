@@ -800,6 +800,14 @@ static inline int extract_fqdn(msgpack_object *log,
     return log_extract_key(log, PLATFORM_LOG_FQDN_KEY1, fqdn, fqdn_size, ctx);
 }
 
+static inline int extract_fqdn2(msgpack_object *log,
+                               const char **fqdn, size_t *fqdn_size,
+                               struct platform_log_ctx *ctx)
+{
+    return log_extract_key(log, PLATFORM_LOG_FQDN_KEY1, fqdn, fqdn_size, ctx);
+}
+
+
 static inline int extract_http_code(msgpack_object *log,
                                     int *http_code,
                                     struct platform_log_ctx *ctx)
@@ -951,7 +959,6 @@ static inline int re_emit(msgpack_object ts, msgpack_object map,
     msgpack_pack_str(&packer, source_type_len(ctx->source));
     msgpack_pack_str_body(&packer, source_type_str(ctx->source), source_type_len(ctx->source));
 
-
     int r = in_emitter_add_record(name->via.str.ptr, name->via.str.size, sbuf.data, sbuf.size, ctx->ins_emitter);
     flb_plg_debug(ctx->ins, "(emit) re-emitting result %i", r);
 
@@ -1000,9 +1007,12 @@ static inline int apply_filter(/*msgpack_packer *packer,*/
     // Choose an extraction function
     int (*extract) (msgpack_object *log,
                     const char **match, size_t *match_size, struct platform_log_ctx *ctx);
+    int (*extract2) (msgpack_object *log,
+                    const char **match, size_t *match_size, struct platform_log_ctx *ctx) = NULL;
 
     if (ctx->source == ENVOY) {
         extract = extract_fqdn;
+        extract2 = extract_fqdn2;
     } else if (ctx->source == EVENT) {
         extract = extract_ns_from_event_log;
     } else if (ctx->source == AUDIT) {
@@ -1043,6 +1053,13 @@ static inline int apply_filter(/*msgpack_packer *packer,*/
                 const char *info_val;
                 int info_val_size;
                 ret = cache_get(ctx->cache, log_match, log_match_size, &info_val, &info_val_size);
+                if ( ret == FLB_FALSE && extract2 != NULL ) {
+                    flb_plg_trace(ctx->ins, "(%s) splunk info not found, trying secondary", source_type_str(ctx->source));
+                    ret = extract2(val, &log_match, &log_match_size, ctx);
+                    if ( ret == 1 ) {
+                        ret = cache_get(ctx->cache, log_match, log_match_size, &info_val, &info_val_size);
+                    }
+                }
                 if ( ret == FLB_TRUE ) {
                     flb_plg_debug(ctx->ins, "(%s) found splunk info for '%.*s'", source_type_str(ctx->source), (int)log_match_size, log_match);
 
