@@ -16,7 +16,7 @@ A stands for Adobe's changes
 
 # Log
 
-## _unreleased_
+## 1.9.2-0.9.1-adobe
 - envoy: fall back to requested_server_name cache lookup when authority misses cache
 
 ## 1.9.2-0.9.0-adobe
